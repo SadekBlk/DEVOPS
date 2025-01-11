@@ -8,14 +8,14 @@ pipeline {
         }
         stage('Build Frontend') {
             steps {
-                dir('frontend') {
+                dir('Frontend') {
                     sh 'docker build -t react-frontend .'
                 }
             }
         }
         stage('Build Backend') {
             steps {
-                dir('backend') {
+                dir('Backend') {
                     sh 'docker build -t node-backend .'
                 }
             }
@@ -37,7 +37,7 @@ pipeline {
         stage('Push Frontend') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    dir('frontend') {
+                    dir('Frontend') {
                         sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
                         sh 'docker tag react-frontend $DOCKER_USER/react-frontend:latest'
                         sh 'docker push $DOCKER_USER/react-frontend:latest'
@@ -48,7 +48,7 @@ pipeline {
         stage('Push Backend') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    dir('backend') {
+                    dir('Backend') {
                         sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
                         sh 'docker tag node-backend $DOCKER_USER/node-backend:latest'
                         sh 'docker push $DOCKER_USER/node-backend:latest'
