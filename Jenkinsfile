@@ -7,9 +7,9 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Repository') {
             steps {
-                // Checkout the repository
+                // Checkout the repository using the Git SCM
                 checkout scm
             }
         }
@@ -17,7 +17,7 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 script {
-                    // Build the frontend
+                    // Build the frontend Docker image
                     dir(FRONTEND_DIR) {
                         sh 'docker build -t react-frontend .'
                     }
@@ -28,7 +28,7 @@ pipeline {
         stage('Build Backend') {
             steps {
                 script {
-                    // Build the backend
+                    // Build the backend Docker image
                     dir(BACKEND_DIR) {
                         sh 'docker build -t node-backend .'
                     }
@@ -47,7 +47,7 @@ pipeline {
 
         stage('Post-Deployment') {
             steps {
-                // Clean up if needed or do any post-deployment actions
+                // Post-deployment steps, like cleanup
                 echo 'Deployment complete!'
             }
         }
@@ -55,7 +55,7 @@ pipeline {
 
     post {
         always {
-            // Perform any cleanup tasks after the pipeline runs
+            // Cleanup actions after the pipeline runs
             echo 'Pipeline finished.'
         }
 
