@@ -7,12 +7,6 @@ pipeline {
     }
 
     stages {
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker --version'
-                sh 'docker build -t my-image .'
-            }
-        }
 
         stage('Build Frontend') {
             steps {
