@@ -11,7 +11,7 @@ pipeline {
             steps {
                 script {
                     dir(env.FRONTEND_DIR) {
-                        bat 'docker build -t react-frontend .'
+                        sh 'docker build -t react-frontend .'
                     }
                 }
             }
@@ -21,7 +21,7 @@ pipeline {
             steps {
                 script {
                     dir(env.BACKEND_DIR) {
-                        bat 'docker build -t node-backend .'
+                        sh 'docker build -t node-backend .'
                     }
                 }
             }
@@ -30,8 +30,8 @@ pipeline {
         stage('Scan for Vulnerabilities') {
             steps {
                 script {
-                    bat 'trivy image react-frontend'
-                    bat 'trivy image node-backend'
+                    sh 'trivy image react-frontend'
+                    sh 'trivy image node-backend'
                 }
             }
         }
@@ -39,8 +39,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    bat 'kubectl apply -f k8s/deployment.yaml'
-                    bat 'kubectl apply -f k8s/service.yaml'
+                    sh 'kubectl apply -f k8s/deployment.yaml'
+                    sh 'kubectl apply -f k8s/service.yaml'
                 }
             }
         }
@@ -48,8 +48,8 @@ pipeline {
         stage('Monitor Deployment') {
             steps {
                 script {
-                    bat 'kubectl get pods -o wide'
-                    bat 'kubectl get svc'
+                    sh 'kubectl get pods -o wide'
+                    sh 'kubectl get svc'
                 }
             }
         }
