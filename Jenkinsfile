@@ -1,5 +1,11 @@
 pipeline {
     agent any
+
+    environment {
+        FRONTEND_DIR = 'Frontend'
+        BACKEND_DIR = 'Backend'
+    }
+
     stages {
         stage('Build Docker Image') {
             steps {
@@ -7,13 +13,6 @@ pipeline {
                 sh 'docker build -t my-image .'
             }
         }
-    }
-    environment {
-        FRONTEND_DIR = 'Frontend'
-        BACKEND_DIR = 'Backend'
-    }
-
-    stages {
 
         stage('Build Frontend') {
             steps {
