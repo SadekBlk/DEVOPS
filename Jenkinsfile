@@ -1,24 +1,64 @@
 pipeline {
     agent any
+
+    environment {
+        FRONTEND_DIR = 'Frontend'
+        BACKEND_DIR = 'Backend'
+    }
+
     stages {
-        stage('Build') {
+
+        stage('Build Frontend') {
             steps {
-                sh 'docker build -t my-app .'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'docker run my-app npm test'
-            }
-        }
-        stage('Push') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                    sh 'docker tag my-app $DOCKER_USER/my-app:latest'
-                    sh 'docker push $DOCKER_USER/my-app:latest'
+                script {
+                    // Build the frontend Docker image
+                    dir(FRONTEND_DIR) {
+                        sh 'docker build -t react-frontend .'
+                    }
                 }
             }
+        }
+
+        stage('Build Backend') {
+            steps {
+                script {
+                    // Build the backend Docker image
+                    dir(BACKEND_DIR) {
+                        sh 'docker build -t node-backend .'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Containers') {
+            steps {
+                script {
+                    // Deploy the containers using Docker Compose
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
+
+        stage('Post-Deployment') {
+            steps {
+                // Post-deployment steps, like cleanup
+                echo 'Deployment complete!'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Cleanup actions after the pipeline runs
+            echo 'Pipeline finished.'
+        }
+
+        success {
+            echo 'Pipeline succeeded.'
+        }
+
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
