@@ -1,71 +1,32 @@
-pipeline {
-    agent any
+stages:
+  - build
 
-    environment {
-        FRONTEND_DIR = 'Frontend'
-        BACKEND_DIR = 'Backend'
-    }
+variables:
+  APP_NAME: anime
+  COMMIT: $CI_COMMIT_SHORT_SHA
+  REGISTRY_USERNAME: your-dockerhub-username  # Replace with your Docker Hub username
+  REGISTRY_PASSWORD: $DOCKERHUB_PASSWORD      # Store this as a CI/CD variable in GitLab
 
-    stages {
-        stage('Build Frontend') {
-            steps {
-                script {
-                    dir(env.FRONTEND_DIR) {
-                        sh 'docker build -t react-frontend .'
-                    }
-                }
-            }
-        }
-
-        stage('Build Backend') {
-            steps {
-                script {
-                    dir(env.BACKEND_DIR) {
-                        sh 'docker build -t node-backend .'
-                    }
-                }
-            }
-        }
-
-        stage('Scan for Vulnerabilities') {
-            steps {
-                script {
-                    sh 'trivy image react-frontend'
-                    sh 'trivy image node-backend'
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    sh 'kubectl apply -f k8s/deployment.yaml'
-                    sh 'kubectl apply -f k8s/service.yaml'
-                }
-            }
-        }
-
-        stage('Monitor Deployment') {
-            steps {
-                script {
-                    sh 'kubectl get pods -o wide'
-                    sh 'kubectl get svc'
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            echo 'Pipeline finished.'
-        }
-
-        success {
-            echo 'Pipeline succeeded.'
-        }
-
-        failure {
-            echo 'Pipeline failed.'
-        }
-    }
-}
+build_app:
+  stage: build
+  only:
+    changes:
+      - "src/**/*"
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - echo "Logging into Docker Hub..."
+    - echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USERNAME" --password-stdin
+  script:
+    - echo "Building Docker image..."
+    - docker build -t "$REGISTRY_USERNAME/$APP_NAME:$COMMIT" .
+    - echo "Pushing Docker image to Docker Hub..."
+    - docker push "$REGISTRY_USERNAME/$APP_NAME:$COMMIT"
+    - echo "Cleaning up Docker image..."
+    - docker rmi "$REGISTRY_USERNAME/$APP_NAME:$COMMIT"  # Remove the image from the pipeline server
+    - docker logout "$REGISTRY_USERNAME"
+  after_script:
+    - echo "Build stage completed."
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"  # Only run this job on the main branch
