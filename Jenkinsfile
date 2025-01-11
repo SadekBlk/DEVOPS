@@ -7,13 +7,11 @@ pipeline {
     }
 
     stages {
-
         stage('Build Frontend') {
             steps {
                 script {
-                    // Build the frontend Docker image
-                    dir(FRONTEND_DIR) {
-                        sh 'docker build -t react-frontend .'
+                    dir(env.FRONTEND_DIR) {
+                        bat 'docker build -t react-frontend .'
                     }
                 }
             }
@@ -22,9 +20,8 @@ pipeline {
         stage('Build Backend') {
             steps {
                 script {
-                    // Build the backend Docker image
-                    dir(BACKEND_DIR) {
-                        sh 'docker build -t node-backend .'
+                    dir(env.BACKEND_DIR) {
+                        bat 'docker build -t node-backend .'
                     }
                 }
             }
@@ -33,15 +30,13 @@ pipeline {
         stage('Deploy Containers') {
             steps {
                 script {
-                    // Deploy the containers using Docker Compose
-                    sh 'docker-compose up -d'
+                    bat 'docker-compose up -d'
                 }
             }
         }
 
         stage('Post-Deployment') {
             steps {
-                // Post-deployment steps, like cleanup
                 echo 'Deployment complete!'
             }
         }
@@ -49,7 +44,6 @@ pipeline {
 
     post {
         always {
-            // Cleanup actions after the pipeline runs
             echo 'Pipeline finished.'
         }
 
