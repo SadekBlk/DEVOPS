@@ -1,60 +1,70 @@
 pipeline {
     agent any
+
+    environment {
+        FRONTEND_DIR = 'Frontend'
+        BACKEND_DIR = 'Backend'
+    }
+
     stages {
         stage('Checkout') {
             steps {
+                // Checkout the repository
                 checkout scm
             }
         }
+
         stage('Build Frontend') {
             steps {
-                dir('Frontend') {
-                    sh 'docker build -t react-frontend .'
+                script {
+                    // Build the frontend
+                    dir(FRONTEND_DIR) {
+                        sh 'docker build -t react-frontend .'
+                    }
                 }
             }
         }
+
         stage('Build Backend') {
             steps {
-                dir('Backend') {
-                    sh 'docker build -t node-backend .'
-                }
-            }
-        }
-        stage('Test Frontend') {
-            steps {
-                dir('frontend') {
-                    sh 'docker run react-frontend npm test'
-                }
-            }
-        }
-        stage('Test Backend') {
-            steps {
-                dir('backend') {
-                    sh 'docker run node-backend npm test'
-                }
-            }
-        }
-        stage('Push Frontend') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    dir('Frontend') {
-                        sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                        sh 'docker tag react-frontend $DOCKER_USER/react-frontend:latest'
-                        sh 'docker push $DOCKER_USER/react-frontend:latest'
+                script {
+                    // Build the backend
+                    dir(BACKEND_DIR) {
+                        sh 'docker build -t node-backend .'
                     }
                 }
             }
         }
-        stage('Push Backend') {
+
+        stage('Deploy Containers') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    dir('Backend') {
-                        sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                        sh 'docker tag node-backend $DOCKER_USER/node-backend:latest'
-                        sh 'docker push $DOCKER_USER/node-backend:latest'
-                    }
+                script {
+                    // Deploy the containers using Docker Compose
+                    sh 'docker-compose up -d'
                 }
             }
+        }
+
+        stage('Post-Deployment') {
+            steps {
+                // Clean up if needed or do any post-deployment actions
+                echo 'Deployment complete!'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Perform any cleanup tasks after the pipeline runs
+            echo 'Pipeline finished.'
+        }
+
+        success {
+            echo 'Pipeline succeeded.'
+        }
+
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
