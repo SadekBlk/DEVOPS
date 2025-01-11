@@ -27,17 +27,30 @@ pipeline {
             }
         }
 
-        stage('Deploy Containers') {
+        stage('Scan for Vulnerabilities') {
             steps {
                 script {
-                    bat 'docker-compose up -d'
+                    bat 'trivy image react-frontend'
+                    bat 'trivy image node-backend'
                 }
             }
         }
 
-        stage('Post-Deployment') {
+        stage('Deploy to Kubernetes') {
             steps {
-                echo 'Deployment complete!'
+                script {
+                    bat 'kubectl apply -f k8s/deployment.yaml'
+                    bat 'kubectl apply -f k8s/service.yaml'
+                }
+            }
+        }
+
+        stage('Monitor Deployment') {
+            steps {
+                script {
+                    bat 'kubectl get pods -o wide'
+                    bat 'kubectl get svc'
+                }
             }
         }
     }
