@@ -2,7 +2,7 @@ import { Fragment, useContext, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../AuthContext";
-
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 export default function AddProduct({
   addProductModalSetting,
   handlePageUpdate,
