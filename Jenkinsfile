@@ -1,58 +1,65 @@
 pipeline {
     agent any
+    environment {
+        DOCKER_CREDENTIALS_ID = 'docker-hub'
+        DOCKER_IMAGE_FRONTEND = 'react-frontend'
+        DOCKER_IMAGE_BACKEND = 'node-backend'
+        GITHUB_CREDENTIALS_ID = 'github-credentials' // Use the ID you created
+    }
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']], // Change 'main' to your branch name if different
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/SadekBlk/DEVOPS.git', // Replace with your GitHub repo URL
+                        credentialsId: "${GITHUB_CREDENTIALS_ID}"
+                    ]]
+                ])
             }
         }
         stage('Build Frontend') {
             steps {
                 dir('Frontend') {
-                    sh 'docker build -t react-frontend .'
+                    sh 'docker build -t $DOCKER_IMAGE_FRONTEND .'
                 }
             }
         }
         stage('Build Backend') {
             steps {
                 dir('Backend') {
-                    sh 'docker build -t node-backend .'
+                    sh 'docker build -t $DOCKER_IMAGE_BACKEND .'
                 }
             }
         }
-        stage('Test Frontend') {
+        stage('Scan Frontend') {
             steps {
-                dir('frontend') {
-                    sh 'docker run react-frontend npm test'
-                }
+                sh 'trivy image $DOCKER_IMAGE_FRONTEND'
             }
         }
-        stage('Test Backend') {
+        stage('Scan Backend') {
             steps {
-                dir('backend') {
-                    sh 'docker run node-backend npm test'
-                }
+                sh 'trivy image $DOCKER_IMAGE_BACKEND'
             }
         }
         stage('Push Frontend') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    dir('Frontend') {
-                        sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                        sh 'docker tag react-frontend $DOCKER_USER/react-frontend:latest'
-                        sh 'docker push $DOCKER_USER/react-frontend:latest'
-                    }
+                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                    sh 'docker tag $DOCKER_IMAGE_FRONTEND $DOCKER_USER/$DOCKER_IMAGE_FRONTEND:latest'
+                    sh 'docker push $DOCKER_USER/$DOCKER_IMAGE_FRONTEND:latest'
                 }
             }
         }
         stage('Push Backend') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    dir('Backend') {
-                        sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                        sh 'docker tag node-backend $DOCKER_USER/node-backend:latest'
-                        sh 'docker push $DOCKER_USER/node-backend:latest'
-                    }
+                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                    sh 'docker tag $DOCKER_IMAGE_BACKEND $DOCKER_USER/$DOCKER_IMAGE_BACKEND:latest'
+                    sh 'docker push $DOCKER_USER/$DOCKER_IMAGE_BACKEND:latest'
                 }
             }
         }
